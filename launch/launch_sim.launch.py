@@ -5,6 +5,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch_ros.actions import Node
@@ -12,7 +13,10 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-
+    # This tells Gazebo to use the CPU for graphics, fixing the invisible rays
+    env_var_1 = SetEnvironmentVariable('LIBGL_ALWAYS_SOFTWARE', '1')
+    env_var_2 = SetEnvironmentVariable('GZ_SIM_RESOURCE_PATH',
+     os.path.join(get_package_share_directory('my_bot'), 'worlds'))
 
     # robot_state_publisher 
 
@@ -30,7 +34,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={'gz_args': f'-r {my_custom_world}'}.items(),
+        launch_arguments={'gz_args': f'-r -v 4 {my_custom_world}'}.items(),
     )
     # gazebo = IncludeLaunchDescription(
     #             PythonLaunchDescriptionSource([os.path.join(
@@ -56,7 +60,8 @@ def generate_launch_description():
             # Change my_bot to robot here:
             '/model/robot/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan'
         ],
         remappings=[
             ('/model/robot/tf', '/tf')
