@@ -34,7 +34,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={'gz_args': f'-r -v 4 {my_custom_world}'}.items(),
+        launch_arguments={'gz_args': f'-r -v 1 {my_custom_world}'}.items(), #the number here is the level of warning
     )
     # gazebo = IncludeLaunchDescription(
     #             PythonLaunchDescriptionSource([os.path.join(
@@ -50,6 +50,19 @@ def generate_launch_description():
                                    '-z', '0.1'],
                         output='screen')
 
+    # for compressing image
+    republish_rgb = Node(
+        package='image_transport',
+        executable='republish',
+        arguments=['raw', 'in:=/camera/image_raw', 'compressed', 'out:=/camera/image_raw'],
+        remappings= #ros is ignoring this, so the type is still out
+        [
+            ('in', '/camera/image_raw'),
+            ('out', '/camera/image/raw')
+        ],
+        output='screen'
+    )
+
     # Bridge
     bridge = Node(
         package='ros_gz_bridge',
@@ -57,11 +70,12 @@ def generate_launch_description():
         arguments=[
             '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
             '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
-            # Change my_bot to robot here:
             '/model/robot/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan'
+            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo'
         ],
         remappings=[
             ('/model/robot/tf', '/tf')
@@ -82,5 +96,6 @@ def generate_launch_description():
         gazebo,
         spawn_entity,
         bridge,
+        republish_rgb,
         # joint_state_publisher,
     ])
