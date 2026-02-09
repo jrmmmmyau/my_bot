@@ -7,6 +7,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
 
 from launch_ros.actions import Node
 
@@ -68,7 +69,7 @@ def generate_launch_description():
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
-            '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+            # '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
             '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
             '/model/robot/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
@@ -90,6 +91,57 @@ def generate_launch_description():
         name='joint_state_publisher',
         parameters=[{'use_sim_time': True}]
     )
+
+
+  
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "diff_controller", 
+            "--param-file", os.path.join(get_package_share_directory('my_bot'), 'config', 'my_controllers.yaml')
+        ],
+    )
+
+    joint_broad_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_broad"],
+    )
+
+    teleop_node = Node(
+        package='teleop_twist_keyboard',
+        executable='teleop_twist_keyboard',
+        name='teleop',
+        prefix='xterm -e', 
+        remappings=[
+            # ('/cmd_vel', '/diff_controller/cmd_vel')
+        ]
+    )
+
+
+
+    delayed_diff_drive_spawner = TimerAction(
+        period=5.0,
+        actions=[diff_drive_spawner]
+    )
+
+    delayed_joint_broad_spawner = TimerAction(
+        period=5.0,
+        actions=[joint_broad_spawner]
+    )
+
+
+    twist_stamper = Node(
+        package='twist_stamper',
+        executable='twist_stamper',
+        remappings=[
+            ('/cmd_vel_in', '/cmd_vel'),              # From teleop
+            ('/cmd_vel_out', '/diff_controller/cmd_vel') # To controller
+        ]
+    )
+
+
     # Launch them all!
     return LaunchDescription([
         rsp,
@@ -97,5 +149,11 @@ def generate_launch_description():
         spawn_entity,
         bridge,
         republish_rgb,
+        # diff_drive_spawner,
+        # joint_broad_spawner,
+        teleop_node,
+        delayed_diff_drive_spawner,
+        delayed_joint_broad_spawner,
         # joint_state_publisher,
+        twist_stamper
     ])
