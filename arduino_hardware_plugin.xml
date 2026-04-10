@@ -1,0 +1,7 @@
+<library path="my_bot">
+    <class name="my_bot/MyBotArduinoHardware" 
+           type="my_bot::MyBotArduinoHardware" 
+           base_class_type="hardware_interface::SystemInterface">
+        <description>Arduino hardware interface</description>
+    </class>
+</library>

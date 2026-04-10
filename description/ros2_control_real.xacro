@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
     
-    <ros2_control name = "Gazebo_system" type = "system">
+    <!-- <ros2_control name = "Gazebo_system" type = "system">
         <hardware>
             <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
@@ -31,9 +31,9 @@
             <parameters>/home/jrm/dev_ws/src/my_bot/config/my_controllers.yaml</parameters>
             <controller_manager_prefix_node_name>controller_manager</controller_manager_prefix_node_name>
         </plugin>
-    </gazebo>
+    </gazebo> -->
 
-    <!-- <ros2_control name = "arduino_drive" type = "system">
+    <ros2_control name = "arduino_drive" type = "system">
         <hardware>
             <plugin>my_bot/MyBotArduinoHardware</plugin>
             <param name="device">/dev/ttyACM0</param> <!--change this to the correct USB-->
@@ -60,7 +60,7 @@
             <state_interface name = "velocity"/>
             <state_interface name = "position"/>
         </joint>
-    </ros2_control> -->
+    </ros2_control>
 
     
 

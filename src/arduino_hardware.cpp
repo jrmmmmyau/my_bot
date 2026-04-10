@@ -1,6 +1,8 @@
 #include "my_bot/arduino_hardware.hpp"
 #include <sstream>
 #include "pluginlib/class_list_macros.hpp"
+#include <cmath>
+#include <algorithm>
 
 namespace my_bot{
     hardware_interface::CallbackReturn MyBotArduinoHardware::on_init(
@@ -87,14 +89,46 @@ namespace my_bot{
         return command_interfaces;
 
     }
+
+    hardware_interface::return_type MyBotArduinoHardware::read(
+    const rclcpp::Time & time, const rclcpp::Duration & period)
+    {
+        std::string response;
+        serial_port_.Write("e\r");
+        serial_port_.ReadLine(response, '\n', timeout_ms_);
+        
+        std::istringstream iss(response);
+        int enc_left, enc_right;
+        iss >> enc_left >> enc_right;
+
+        double delta_left = (enc_left - wheel_left_.enc) * (2 * M_PI / enc_counts_per_rev_);
+        double delta_right = (enc_right - wheel_right_.enc) * (2 * M_PI / enc_counts_per_rev_);
+
+        wheel_left_.enc = enc_left;
+        wheel_right_.enc = enc_right;
+
+        wheel_left_.position += delta_left;
+        wheel_right_.position += delta_right;
+
+        wheel_left_.velocity = delta_left / period.seconds();
+        wheel_right_.velocity = delta_right / period.seconds();
+
+        return hardware_interface::return_type::OK;
+    }
+
+    hardware_interface::return_type MyBotArduinoHardware::write(const rclcpp::Time & time, const rclcpp::Duration & period){
+        double left=wheel_left_.command;
+        double right=wheel_right_.command;
+        left=left/18.64*255;
+        right=right/18.64*255;
+        left = std::clamp(left, -255.0, 255.0);
+        right = std::clamp(right, -255.0, 255.0);
+        std::ostringstream cmd;
+        cmd << "m " << (int)left << " " << (int)right << "\r";
+        serial_port_.Write(cmd.str());
+        return hardware_interface::return_type::OK;
+    }
 }
-
-
-
-
-
-hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
-hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 PLUGINLIB_EXPORT_CLASS(
     my_bot::MyBotArduinoHardware,
