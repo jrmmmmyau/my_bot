@@ -3,6 +3,8 @@
 #include "pluginlib/class_list_macros.hpp"
 #include <cmath>
 #include <algorithm>
+#include <thread>
+#include <chrono>
 
 namespace my_bot{
     hardware_interface::CallbackReturn MyBotArduinoHardware::on_init(
@@ -33,13 +35,16 @@ namespace my_bot{
     }
 
     hardware_interface::CallbackReturn MyBotArduinoHardware::on_activate(const rclcpp_lifecycle::State & previous_state){
-        try{
-                serial_port_.Write("\r");
-                return CallbackReturn::SUCCESS;
-            }
-            catch(const std::exception & ERROR){ 
-                return CallbackReturn::ERROR;
-            }
+
+        try {
+            serial_port_.Write("\r");
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            serial_port_.FlushIOBuffers();
+            return CallbackReturn::SUCCESS;
+        }
+        catch(const std::exception & e) {
+            return CallbackReturn::ERROR;
+        }
 
     }
 
