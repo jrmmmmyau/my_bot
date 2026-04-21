@@ -37,15 +37,38 @@ def generate_launch_description():
         executable="spawner",
         arguments=["joint_broad"],
     )
+    #this is for keyboard
+    # teleop_node = Node(
+    #     package='teleop_twist_keyboard',
+    #     executable='teleop_twist_keyboard',
+    #     name='teleop',
+    #     prefix='xterm -e', 
+    #     remappings=[
+    #         # ('/cmd_vel', '/diff_controller/cmd_vel')
+    #     ]
+    # )
+
+
+    #this is for controller
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy',
+        output='screen'
+    )
 
     teleop_node = Node(
-        package='teleop_twist_keyboard',
-        executable='teleop_twist_keyboard',
+        package='teleop_twist_joy',
+        executable='teleop_node',
         name='teleop',
-        prefix='xterm -e', 
-        remappings=[
-            # ('/cmd_vel', '/diff_controller/cmd_vel')
-        ]
+        output='screen',
+        parameters=[{
+            'axis_linear.x': 1,
+            'axis_angular.yaw': 0,
+            'scale_linear.x': 1.0,
+            'scale_angular.yaw': 1.5,
+            'require_enable_button': False,
+        }]
     )
     controller_manager = Node(
     package='controller_manager',
@@ -83,6 +106,7 @@ def generate_launch_description():
         rsp,
         controller_manager,
         teleop_node,
+        joy_node,
         delayed_diff_drive_spawner,
         delayed_joint_broad_spawner,
         twist_stamper
